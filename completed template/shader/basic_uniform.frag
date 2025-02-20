@@ -1,15 +1,18 @@
 #version 460
 
-in vec3 FragPos;
-in vec3 Normal;
-in vec3 LightDir;
+flat in vec3 FragPos;
+flat in vec3 Normal;
+flat in vec3 LightDir;
 
 out vec4 FragColor;
 
 struct LightInfo {
+    vec4 position;
     vec3 La; // Ambient light
     vec3 Ld; // Diffuse light
     vec3 Ls; // Specular light
+    vec3 direction; // Spotlight direction
+    float cutoff; // Spotlight cutoff angle (in degrees)
 };
 
 struct MaterialInfo {
@@ -36,8 +39,12 @@ void main()
     float rDotV = max(dot(r, v), 0.0);
     vec3 specular = Light.Ls * Material.Ks * pow(rDotV, Material.Shininess);
 
-    vec3 color = ambient + diffuse + specular;
+    // Spotlight effect
+    float theta = dot(s, normalize(-Light.direction));
+    float epsilon = Light.cutoff - 0.1;
+    float intensity = clamp((theta - epsilon) / (Light.cutoff - epsilon), 0.0, 1.0);
+
+    vec3 color = ambient + (diffuse + specular) * intensity;
     FragColor = vec4(color, 1.0);
 }
-
 

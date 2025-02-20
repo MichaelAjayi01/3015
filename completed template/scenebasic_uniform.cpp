@@ -15,22 +15,33 @@ using std::endl;
 using glm::vec3;
 using glm::mat4;
 
-SceneBasic_Uniform::SceneBasic_Uniform() : torus(0.7f, 0.3f, 30, 30) {}
+SceneBasic_Uniform::SceneBasic_Uniform() : torus(0.7f, 0.3f, 30, 30) 
+{
+}
 
 void SceneBasic_Uniform::initScene()
 {
     compile();
     glEnable(GL_DEPTH_TEST);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set the background color to black
     model = glm::mat4(1.0f);
     view = glm::lookAt(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, glm::radians(-35.0f), vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(15.0f), vec3(0.0f, 1.0f, 0.0f));
     projection = mat4(1.0f);
 
-    prog.setUniform("LightPosition", view * glm::vec4(5.0f, 5.0f, 2.0f, 1.0f));
-    prog.setUniform("Light.La", vec3(0.4f, 0.4f, 0.4f));
+    // Position the light above the torus
+    prog.setUniform("Light.position", view * glm::vec4(0.0f, 5.0f, 0.0f, 1.0f));
+    // Ambient light intensity
+    prog.setUniform("Light.La", vec3(0.1f, 0.1f, 0.1f));
+    // Diffuse light intensity
     prog.setUniform("Light.Ld", vec3(1.0f, 1.0f, 1.0f));
+    // Specular light intensity
     prog.setUniform("Light.Ls", vec3(1.0f, 1.0f, 1.0f));
+    // Spotlight direction pointing down
+    prog.setUniform("Light.direction", vec3(0.0f, -1.0f, 0.0f));
+    // Spotlight cutoff angle
+    prog.setUniform("Light.cutoff", glm::cos(glm::radians(15.0f)));
 
     prog.setUniform("Material.Ka", vec3(0.2f, 0.55f, 0.9f));
     prog.setUniform("Material.Kd", vec3(0.2f, 0.55f, 0.9f));
