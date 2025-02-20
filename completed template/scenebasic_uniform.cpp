@@ -27,9 +27,9 @@ void SceneBasic_Uniform::initScene()
     model = glm::rotate(model, glm::radians(15.0f), vec3(0.0f, 1.0f, 0.0f));
     projection = mat4(1.0f);
 
-    prog.setUniform("Light.position", view * glm::vec4(5.0f, 5.0f, 2.0f, 1.0f));
-    prog.setUniform("Light.Ld", vec3(1.0f, 1.0f, 1.0f));
+    prog.setUniform("LightPosition", view * glm::vec4(5.0f, 5.0f, 2.0f, 1.0f));
     prog.setUniform("Light.La", vec3(0.4f, 0.4f, 0.4f));
+    prog.setUniform("Light.Ld", vec3(1.0f, 1.0f, 1.0f));
     prog.setUniform("Light.Ls", vec3(1.0f, 1.0f, 1.0f));
 
     prog.setUniform("Material.Ka", vec3(0.2f, 0.55f, 0.9f));
@@ -37,8 +37,6 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("Material.Ks", vec3(0.8f, 0.8f, 0.8f));
     prog.setUniform("Material.Shininess", 100.0f);
 }
-
-
 
 void SceneBasic_Uniform::update(float t)
 {
