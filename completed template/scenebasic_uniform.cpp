@@ -23,7 +23,6 @@ void SceneBasic_Uniform::initScene()
 {
     compile();
     glEnable(GL_DEPTH_TEST);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Set the background color to black
     model = glm::mat4(1.0f);
     view = glm::lookAt(vec3(0.0f, 0.0f, 2.0f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     model = glm::rotate(model, glm::radians(-35.0f), vec3(1.0f, 0.0f, 0.0f));
@@ -47,7 +46,12 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("Material.Kd", vec3(0.2f, 0.55f, 0.9f));
     prog.setUniform("Material.Ks", vec3(0.8f, 0.8f, 0.8f));
     prog.setUniform("Material.Shininess", 100.0f);
+
+    // Set fog parameters
+    prog.setUniform("fogColor", vec3(0.5f, 0.5f, 0.5f)); // Gray fog
+    prog.setUniform("fogDensity", 0.6f);
 }
+
 
 void SceneBasic_Uniform::update(float t)
 {

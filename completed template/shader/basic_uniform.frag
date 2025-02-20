@@ -25,6 +25,10 @@ struct MaterialInfo {
 uniform LightInfo Light;
 uniform MaterialInfo Material;
 
+// Fog parameters
+uniform vec3 fogColor;
+uniform float fogDensity;
+
 void main()
 {
     vec3 ambient = Light.La * Material.Ka;
@@ -45,6 +49,13 @@ void main()
     float intensity = clamp((theta - epsilon) / (Light.cutoff - epsilon), 0.0, 1.0);
 
     vec3 color = ambient + (diffuse + specular) * intensity;
-    FragColor = vec4(color, 1.0);
-}
 
+    // Fog calculations
+    float distance = length(FragPos);
+    float fogFactor = exp(-fogDensity * distance);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);
+
+    vec3 finalColor = mix(fogColor, color, fogFactor);
+
+    FragColor = vec4(finalColor, 1.0);
+}
