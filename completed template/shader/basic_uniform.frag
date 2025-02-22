@@ -1,8 +1,9 @@
 #version 460
 
-flat in vec3 FragPos;
-flat in vec3 Normal;
-flat in vec3 LightDir;
+in vec3 FragPos;
+in vec3 Normal;
+in vec3 LightDir;
+in vec2 TexCoord; // Receive texture coordinates from the vertex shader
 
 out vec4 FragColor;
 
@@ -24,6 +25,7 @@ struct MaterialInfo {
 
 uniform LightInfo Light;
 uniform MaterialInfo Material;
+uniform sampler2D Texture; // Add texture sampler
 
 // Fog parameters
 uniform vec3 fogColor;
@@ -50,6 +52,10 @@ void main()
 
     vec3 color = ambient + (diffuse + specular) * intensity;
 
+    // Apply texture
+    vec3 texColor = texture(Texture, TexCoord).rgb;
+    color *= texColor;
+
     // Fog calculations
     float distance = length(FragPos);
     float fogFactor = exp(-fogDensity * distance);
@@ -59,3 +65,4 @@ void main()
 
     FragColor = vec4(finalColor, 1.0);
 }
+

@@ -13,19 +13,22 @@
 class SceneBasic_Uniform : public Scene
 {
 private:
-	//Torus torus;
-	std::unique_ptr<ObjMesh> mesh;
+    // Existing member variables...
+    std::unique_ptr<ObjMesh> mesh;
     GLSLProgram prog;
-	void setMatrices();
+    float angle;
+
+    void setMatrices();
     void compile();
 
 public:
     SceneBasic_Uniform();
 
     void initScene();
-    void update( float t );
+    void update(float t);
     void render();
     void resize(int, int);
 };
 
 #endif // SCENEBASIC_UNIFORM_H
+

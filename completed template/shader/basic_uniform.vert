@@ -2,10 +2,12 @@
 
 layout (location = 0) in vec3 VertexPosition;
 layout (location = 1) in vec3 VertexNormal;
+layout (location = 2) in vec2 VertexTexCoord; // Add texture coordinate attribute
 
-flat out vec3 FragPos;
-flat out vec3 Normal;
-flat out vec3 LightDir;
+out vec3 FragPos;
+out vec3 Normal;
+out vec3 LightDir;
+out vec2 TexCoord; // Pass texture coordinates to the fragment shader
 
 struct LightInfo {
     vec4 position;
@@ -39,6 +41,8 @@ void main()
     FragPos = viewPos.xyz;
     Normal = n;
     LightDir = s;
+    TexCoord = VertexTexCoord; // Pass texture coordinates to the fragment shader
 
     gl_Position = MVP * vec4(VertexPosition, 1.0);
 }
+
