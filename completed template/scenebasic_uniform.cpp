@@ -23,7 +23,7 @@ using glm::mat4;
 GLuint textureID;
 
 SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f) {
-    mesh = ObjMesh::load("media/sword.obj", true);
+    mesh = ObjMesh::load("media/Tachi_Sword_MESH.obj", true);
 }
 
 void SceneBasic_Uniform::initScene()
@@ -35,7 +35,7 @@ void SceneBasic_Uniform::initScene()
     // Load the texture
     int width, height, nrChannels;
     std::cout << "Attempting to load texture..." << std::endl;
-    unsigned char* data = stbi_load("media/Textures/BaseColor.png", &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_BaseColor.jpg", &width, &height, &nrChannels, 0);
     std::cout << "Texture function executed!" << std::endl;
     if (data)
     {
@@ -47,8 +47,8 @@ void SceneBasic_Uniform::initScene()
         glGenerateMipmap(GL_TEXTURE_2D);
 
         // Set the texture wrapping/filtering options
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // Wrap horizontally
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Wrap vertically
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -68,12 +68,12 @@ void SceneBasic_Uniform::initScene()
     }
 
     // Set the camera position to be further back to zoom out
-    view = glm::lookAt(vec3(0.0f, 0.0f, 15.0f), // Camera position (further back)
+    view = glm::lookAt(vec3(0.0f, 0.0f, 40.0f), // Camera position (further back)
         vec3(0.0f, 0.0f, 0.0f), // Look at the origin
         vec3(0.0f, 1.0f, 0.0f)); // Up vector
 
     // Apply rotations to the model matrix to make the sword stand vertically
-    model = glm::rotate(model, glm::radians(76.0f), vec3(1.0f, 0.0f, 0.0f)); // Rotate around the x-axis to make it stand vertically
+    model = glm::rotate(model, glm::radians(45.0f), vec3(1.0f, 0.0f, 0.0f)); // Rotate around the x-axis by 45 degrees
     projection = mat4(1.0f);
 
     // Position the light above the torus
@@ -105,8 +105,6 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("fogColor", vec3(0.5f, 0.5f, 0.5f)); // Gray fog
     prog.setUniform("fogDensity", 0.0f);
 }
-
-
 
 
 

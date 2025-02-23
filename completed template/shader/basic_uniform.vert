@@ -41,8 +41,7 @@ void main()
     FragPos = viewPos.xyz;
     Normal = n;
     LightDir = s;
-    TexCoord = VertexTexCoord; // Pass texture coordinates to the fragment shader
+    TexCoord = vec2(VertexTexCoord.x, 1.0 - VertexTexCoord.y); // Flip the V coordinate
 
     gl_Position = MVP * vec4(VertexPosition, 1.0);
 }
-
