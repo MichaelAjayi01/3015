@@ -26,6 +26,7 @@ struct MaterialInfo {
 uniform LightInfo Light;
 uniform MaterialInfo Material;
 uniform sampler2D Texture; // Add texture sampler
+uniform sampler2D MetallicTexture; // Add metallic texture sampler
 
 // Fog parameters
 uniform vec3 fogColor;
@@ -38,30 +39,39 @@ void main()
     vec3 n = normalize(Normal);
     vec3 s = normalize(LightDir);
     float sDotN = max(dot(s, n), 0.0);
-    vec3 diffuse = Light.Ld * Material.Kd * sDotN;
+    vec3 diffuseLight = Light.Ld * Material.Kd * sDotN;
 
     vec3 v = normalize(-FragPos);
     vec3 r = reflect(-s, n);
     float rDotV = max(dot(r, v), 0.0);
-    vec3 specular = Light.Ls * Material.Ks * pow(rDotV, Material.Shininess);
+    vec3 specularLight = Light.Ls * Material.Ks * pow(rDotV, Material.Shininess);
 
     // Spotlight effect
     float theta = dot(s, normalize(-Light.direction));
     float epsilon = Light.cutoff - 0.1;
     float intensity = clamp((theta - epsilon) / (Light.cutoff - epsilon), 0.0, 1.0);
 
-    vec3 color = ambient + (diffuse + specular) * intensity;
+    vec3 color = ambient + (diffuseLight + specularLight) * intensity;
 
-    // Apply texture
-    vec3 texColor = texture(Texture, TexCoord).rgb;
-    color *= texColor;
+    // Apply base color texture
+    vec3 baseColor = texture(Texture, TexCoord).rgb;
+    float metallic = texture(MetallicTexture, TexCoord).r;
+
+    // Ensure metallic is not fully 1.0 everywhere
+    metallic = clamp(metallic, 0.0, 0.9); // Reduce maximum metallic effect
+
+    // Mix metallic properties properly
+    vec3 diffuse = baseColor * (1.0 - metallic); // Keep some diffuse lighting
+    vec3 specular = mix(vec3(0.04), baseColor, metallic); // Avoid complete blackness
+
+    vec3 finalColor = diffuse + specular; // Blend diffuse + specular lighting
 
     // Fog calculations
     float distance = length(FragPos);
     float fogFactor = exp(-fogDensity * distance);
     fogFactor = clamp(fogFactor, 0.0, 1.0);
 
-    vec3 finalColor = mix(fogColor, color, fogFactor);
+    finalColor = mix(fogColor, finalColor, fogFactor);
 
     FragColor = vec4(finalColor, 1.0);
 }

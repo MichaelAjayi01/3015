@@ -41,7 +41,8 @@ void main()
     FragPos = viewPos.xyz;
     Normal = n;
     LightDir = s;
-    TexCoord = vec2(VertexTexCoord.x, 1.0 - VertexTexCoord.y); // Flip the V coordinate
+    TexCoord = vec2(VertexTexCoord.x, 1.0 - VertexTexCoord.y); // Flip texture coordinates vertically
 
     gl_Position = MVP * vec4(VertexPosition, 1.0);
 }
+

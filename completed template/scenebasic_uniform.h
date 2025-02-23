@@ -17,7 +17,8 @@ private:
     std::unique_ptr<ObjMesh> mesh;
     GLSLProgram prog;
     float angle;
-
+    GLuint textureID;
+    GLuint metallicTextureID;
     void setMatrices();
     void compile();
 
@@ -31,4 +32,3 @@ public:
 };
 
 #endif // SCENEBASIC_UNIFORM_H
-
