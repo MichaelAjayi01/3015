@@ -25,8 +25,9 @@ struct MaterialInfo {
 
 uniform LightInfo Light;
 uniform MaterialInfo Material;
-uniform sampler2D Texture; // Add texture sampler
-uniform sampler2D MetallicTexture; // Add metallic texture sampler
+uniform sampler2D Texture; // Base color texture
+uniform sampler2D MetallicTexture; // Metallic texture
+uniform sampler2D HeightTexture; // Height texture
 
 // Fog parameters
 uniform vec3 fogColor;
@@ -34,6 +35,7 @@ uniform float fogDensity;
 
 void main()
 {
+    // Calculate ambient, diffuse, and specular components
     vec3 ambient = Light.La * Material.Ka;
 
     vec3 n = normalize(Normal);
@@ -46,12 +48,7 @@ void main()
     float rDotV = max(dot(r, v), 0.0);
     vec3 specularLight = Light.Ls * Material.Ks * pow(rDotV, Material.Shininess);
 
-    // Spotlight effect
-    float theta = dot(s, normalize(-Light.direction));
-    float epsilon = Light.cutoff - 0.1;
-    float intensity = clamp((theta - epsilon) / (Light.cutoff - epsilon), 0.0, 1.0);
-
-    vec3 color = ambient + (diffuseLight + specularLight) * intensity;
+    vec3 color = ambient + diffuseLight + specularLight;
 
     // Apply base color texture
     vec3 baseColor = texture(Texture, TexCoord).rgb;
@@ -64,7 +61,12 @@ void main()
     vec3 diffuse = baseColor * (1.0 - metallic); // Keep some diffuse lighting
     vec3 specular = mix(vec3(0.04), baseColor, metallic); // Avoid complete blackness
 
-    vec3 finalColor = diffuse + specular; // Blend diffuse + specular lighting
+    // Apply height texture for bump mapping
+    float height = texture(HeightTexture, TexCoord).r;
+    vec3 perturbedNormal = normalize(n + height * vec3(0.0, 0.0, 1.0)); // Simple bump mapping
+
+    // Blend diffuse and specular components
+    vec3 finalColor = diffuse + specular;
 
     // Fog calculations
     float distance = length(FragPos);
@@ -73,6 +75,6 @@ void main()
 
     finalColor = mix(fogColor, finalColor, fogFactor);
 
+    // Output final color
     FragColor = vec4(finalColor, 1.0);
 }
-

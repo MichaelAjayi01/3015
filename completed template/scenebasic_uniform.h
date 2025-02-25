@@ -19,6 +19,7 @@ private:
     float angle;
     GLuint textureID;
     GLuint metallicTextureID;
+	GLuint heightTextureID;
     void setMatrices();
     void compile();
 

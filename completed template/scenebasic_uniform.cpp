@@ -22,10 +22,7 @@ using glm::mat4;
 
 GLuint textureID;
 GLuint metallicTextureID;
-
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), textureID(0), metallicTextureID(0) {
-    mesh = ObjMesh::load("media/Tachi_Sword_MESH.obj", true);
-}
+GLuint heightTextureID;
 
 void checkOpenGLError(const char* stmt, const char* fname, int line) {
     GLenum err = glGetError();
@@ -40,10 +37,24 @@ void checkOpenGLError(const char* stmt, const char* fname, int line) {
         checkOpenGLError(#stmt, __FILE__, __LINE__); \
     } while (0)
 
+// Constructor definition
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), textureID(0), metallicTextureID(0), heightTextureID(0) {
+    
+}
+
 void SceneBasic_Uniform::initScene() {
     compile();
     glEnable(GL_DEPTH_TEST);
     model = glm::mat4(1.0f);
+
+    // Load the mesh
+    std::cout << "Attempting to load mesh..." << std::endl;
+    mesh = ObjMesh::load("media/Tachi_Sword_MESH.obj", true);
+    if (!mesh) {
+        std::cerr << "Failed to load mesh" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    std::cout << "Mesh loaded successfully" << std::endl;
 
     // Load the base color texture
     int width, height, nrChannels;
@@ -101,22 +112,47 @@ void SceneBasic_Uniform::initScene() {
         stbi_image_free(data);
     }
 
+    // Load the height texture
+    std::cout << "Attempting to load height texture..." << std::endl;
+    data = stbi_load("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_Height.jpg", &width, &height, &nrChannels, 0);
+    std::cout << "Texture function executed!" << std::endl;
+    if (data) {
+        std::cout << "Height texture loaded: " << width << "x" << height << " Channels: " << nrChannels << std::endl;
+        GLenum format = (nrChannels == 4) ? GL_RGBA : (nrChannels == 3) ? GL_RGB : GL_RED;
+        GL_CHECK(glGenTextures(1, &heightTextureID));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, heightTextureID));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data));
+        GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
+
+        // Set the texture wrapping/filtering options
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+        stbi_image_free(data);
+    }
+    else {
+        std::cerr << "Failed to load height texture" << std::endl;
+        stbi_image_free(data);
+    }
+
     // Check for OpenGL errors
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
         std::cerr << "OpenGL error: " << err << std::endl;
     }
 
-    // Set the camera position to be further back to zoom out
-    view = glm::lookAt(vec3(0.0f, 0.0f, 40.0f), // Camera position (further back)
-        vec3(0.0f, 0.0f, 0.0f), // Look at the origin
-        vec3(0.0f, 1.0f, 0.0f)); // Up vector
 
-    // Apply rotations to the model matrix to make the sword stand vertically
-    model = glm::rotate(model, glm::radians(45.0f), vec3(1.0f, 0.0f, 0.0f)); // Rotate around the x-axis by 45 degrees
+    view = glm::lookAt(vec3(0.0f, 0.0f, 35.0f), 
+        vec3(0.0f, 0.0f, 0.0f), 
+        vec3(0.0f, 1.0f, 0.0f));
+
+    
+    model = glm::rotate(model, glm::radians(45.0f), vec3(1.0f, 0.0f, 0.0f));
     projection = mat4(1.0f);
 
-    // Position the light above the torus
+    // Position the light above the blade
     prog.setUniform("Light.position", view * glm::vec4(0.0f, 5.0f, 0.0f, 1.0f));
     // Ambient light intensity 
     prog.setUniform("Light.La", vec3(0.4f, 0.4f, 0.4f));
@@ -131,7 +167,7 @@ void SceneBasic_Uniform::initScene() {
 
     // Set material properties to white
     prog.setUniform("Material.Ka", vec3(1.0f, 1.0f, 1.0f));
-    prog.setUniform("Material.Kd", vec3(1.0f, 1.0f, 1.0f)); // Set diffuse reflectivity to white
+    prog.setUniform("Material.Kd", vec3(1.0f, 1.0f, 1.0f));
     prog.setUniform("Material.Ks", vec3(1.0f, 1.0f, 1.0f));
     prog.setUniform("Material.Shininess", 100.0f);
 
@@ -149,8 +185,8 @@ void SceneBasic_Uniform::initScene() {
 
 
 void SceneBasic_Uniform::update(float t) {
-    // Increment the rotation angle
-    angle += 0.0001f; // Decrease the increment value for very slow-motion rotation
+
+    angle += 0.0001f;
 
     // Apply the rotation to the model matrix
     model = glm::mat4(1.0f); // Reset the model matrix
@@ -162,7 +198,7 @@ void SceneBasic_Uniform::compile() {
         prog.compileShader("shader/basic_uniform.vert");
         prog.compileShader("shader/basic_uniform.frag");
         prog.link();
-        prog.validate(); // Add this line to validate the shader program
+        prog.validate();
         prog.use();
     }
     catch (GLSLProgramException& e) {
@@ -187,6 +223,11 @@ void SceneBasic_Uniform::render() {
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, metallicTextureID);
     prog.setUniform("MetallicTexture", 1);
+
+    // Bind the height texture
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, heightTextureID);
+    prog.setUniform("HeightTexture", 2);
 
     // Check for OpenGL errors
     GLenum err;
