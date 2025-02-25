@@ -25,9 +25,10 @@ struct MaterialInfo {
 
 uniform LightInfo Light;
 uniform MaterialInfo Material;
-uniform sampler2D Texture; // Base color texture
-uniform sampler2D MetallicTexture; // Metallic texture
-uniform sampler2D HeightTexture; // Height texture
+uniform sampler2D Texture;
+uniform sampler2D MetallicTexture; 
+uniform sampler2D NormalTexture; 
+uniform sampler2D HeightTexture; 
 
 // Fog parameters
 uniform vec3 fogColor;
@@ -38,7 +39,11 @@ void main()
     // Calculate ambient, diffuse, and specular components
     vec3 ambient = Light.La * Material.Ka;
 
-    vec3 n = normalize(Normal);
+    // Sample the normal map
+    vec3 normalMap = texture(NormalTexture, TexCoord).rgb;
+    vec3 perturbedNormal = normalize(normalMap * 2.0 - 1.0); // Convert from [0, 1] to [-1, 1]
+
+    vec3 n = normalize(perturbedNormal);
     vec3 s = normalize(LightDir);
     float sDotN = max(dot(s, n), 0.0);
     vec3 diffuseLight = Light.Ld * Material.Kd * sDotN;
@@ -63,7 +68,7 @@ void main()
 
     // Apply height texture for bump mapping
     float height = texture(HeightTexture, TexCoord).r;
-    vec3 perturbedNormal = normalize(n + height * vec3(0.0, 0.0, 1.0)); // Simple bump mapping
+    vec3 perturbedNormalHeight = normalize(n + height * vec3(0.0, 0.0, 1.0)); // Simple bump mapping
 
     // Blend diffuse and specular components
     vec3 finalColor = diffuse + specular;

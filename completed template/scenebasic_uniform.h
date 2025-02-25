@@ -20,6 +20,7 @@ private:
     GLuint textureID;
     GLuint metallicTextureID;
 	GLuint heightTextureID;
+	GLuint normalTextureID;
     void setMatrices();
     void compile();
 

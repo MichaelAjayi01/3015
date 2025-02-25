@@ -23,6 +23,7 @@ using glm::mat4;
 GLuint textureID;
 GLuint metallicTextureID;
 GLuint heightTextureID;
+GLuint normalTextureID;
 
 void checkOpenGLError(const char* stmt, const char* fname, int line) {
     GLenum err = glGetError();
@@ -38,7 +39,7 @@ void checkOpenGLError(const char* stmt, const char* fname, int line) {
     } while (0)
 
 // Constructor definition
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), textureID(0), metallicTextureID(0), heightTextureID(0) {
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), textureID(0), metallicTextureID(0), heightTextureID(0), normalTextureID(0) {
     
 }
 
@@ -137,6 +138,32 @@ void SceneBasic_Uniform::initScene() {
         stbi_image_free(data);
     }
 
+    // Load the normal map texture
+    std::cout << "Attempting to load normal map texture..." << std::endl;
+    data = stbi_load("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_Normal.jpg", &width, &height, &nrChannels, 0);
+    std::cout << "Texture function executed!" << std::endl;
+    if (data) {
+        std::cout << "Normal map texture loaded: " << width << "x" << height << " Channels: " << nrChannels << std::endl;
+        GLenum format = (nrChannels == 4) ? GL_RGBA : (nrChannels == 3) ? GL_RGB : GL_RED;
+        GL_CHECK(glGenTextures(1, &normalTextureID));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, normalTextureID));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data));
+        GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
+
+        // Set the texture wrapping/filtering options
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+        stbi_image_free(data);
+    }
+    else {
+        std::cerr << "Failed to load normal map texture" << std::endl;
+        stbi_image_free(data);
+    }
+
+
     // Check for OpenGL errors
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -229,6 +256,11 @@ void SceneBasic_Uniform::render() {
     glBindTexture(GL_TEXTURE_2D, heightTextureID);
     prog.setUniform("HeightTexture", 2);
 
+    // Bind the normal map texture
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, normalTextureID);
+    prog.setUniform("NormalTexture", 3);
+
     // Check for OpenGL errors
     GLenum err;
     while ((err = glGetError()) != GL_NO_ERROR) {
@@ -238,6 +270,7 @@ void SceneBasic_Uniform::render() {
     // Render the mesh
     mesh->render();
 }
+
 
 
 void SceneBasic_Uniform::resize(int w, int h) {
