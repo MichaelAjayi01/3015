@@ -24,6 +24,7 @@ GLuint textureID;
 GLuint metallicTextureID;
 GLuint heightTextureID;
 GLuint normalTextureID;
+GLuint roughnessTextureID;
 
 void checkOpenGLError(const char* stmt, const char* fname, int line) {
     GLenum err = glGetError();
@@ -39,9 +40,10 @@ void checkOpenGLError(const char* stmt, const char* fname, int line) {
     } while (0)
 
 // Constructor definition
-SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), textureID(0), metallicTextureID(0), heightTextureID(0), normalTextureID(0) {
+SceneBasic_Uniform::SceneBasic_Uniform() : angle(0.0f), textureID(0), metallicTextureID(0), heightTextureID(0), normalTextureID(0), roughnessTextureID(0) {
     
 }
+
 
 void SceneBasic_Uniform::initScene() {
     compile();
@@ -163,6 +165,32 @@ void SceneBasic_Uniform::initScene() {
         stbi_image_free(data);
     }
 
+    // Load the roughness texture
+    std::cout << "Attempting to load roughness texture..." << std::endl;
+    data = stbi_load("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_Roughness.jpg", &width, &height, &nrChannels, 0);
+    std::cout << "Texture function executed!" << std::endl;
+    if (data) {
+        std::cout << "Roughness texture loaded: " << width << "x" << height << " Channels: " << nrChannels << std::endl;
+        GLenum format = (nrChannels == 4) ? GL_RGBA : (nrChannels == 3) ? GL_RGB : GL_RED;
+        GL_CHECK(glGenTextures(1, &roughnessTextureID));
+        GL_CHECK(glBindTexture(GL_TEXTURE_2D, roughnessTextureID));
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data));
+        GL_CHECK(glGenerateMipmap(GL_TEXTURE_2D));
+
+        // Set the texture wrapping/filtering options
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+        GL_CHECK(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+
+        stbi_image_free(data);
+    }
+    else {
+        std::cerr << "Failed to load roughness texture" << std::endl;
+        stbi_image_free(data);
+    }
+
+
 
     // Check for OpenGL errors
     GLenum err;
@@ -260,6 +288,11 @@ void SceneBasic_Uniform::render() {
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, normalTextureID);
     prog.setUniform("NormalTexture", 3);
+
+    // Bind the roughness texture
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, roughnessTextureID);
+    prog.setUniform("RoughnessTexture", 4);
 
     // Check for OpenGL errors
     GLenum err;
