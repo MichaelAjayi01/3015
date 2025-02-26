@@ -27,7 +27,7 @@ void SceneBasic_Uniform::initScene()
 {
     compile();
     glEnable(GL_DEPTH_TEST);
-    model = glm::mat4(1.0f);
+    model = glm::scale(glm::mat4(0.1f), glm::vec3(0.1f));
 
     // Set the camera position to be to the side and slightly angled to the front
     view = glm::lookAt(vec3(0.0f, 0.0f, 32.9f),  // Camera position
@@ -36,20 +36,24 @@ void SceneBasic_Uniform::initScene()
 
     projection = mat4(1.0f);
 
-    prog.setUniform("Spot.L", vec3(0.9f));
+    prog.setUniform("Spot.L", vec3(1.0f));
     prog.setUniform("Spot.La", vec3(0.5f));
-    prog.setUniform("Spot.Exponent", 50.0f);
-    prog.setUniform("Spot.Cutoff", glm::radians(15.0f));
+    prog.setUniform("Spot.Exponent", 1.0f);
+    prog.setUniform("Spot.Cutoff", glm::radians(90.0f));
 
     // Set fog parameters
     prog.setUniform("fogColor", vec3(0.5f, 0.5f, 0.5f));
-    prog.setUniform("FogDensity", 0.001f); 
+    prog.setUniform("FogDensity", 0.001f);
 
-	//base color
-	GLuint texID = Texture::loadTexture("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_BaseColor.jpg");
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texID);
+    // Load Base Color Texture
+    GLuint texID = Texture::loadTexture("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_BaseColor.jpg");
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texID);
+    prog.setUniform("MainText", 0);
 }
+
+
+
 
 void SceneBasic_Uniform::update(float t)
 {
@@ -73,7 +77,8 @@ void SceneBasic_Uniform::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    vec4 lightPos = vec4(0.0f, 10.0f, 10.0f, 1.0f);
+    vec4 lightPos = vec4(0.0f, 0.0f, 5.0f, 1.0f);
+
     GLint loc = glGetUniformLocation(prog.getHandle(), "Spot.Position");
     if (loc >= 0) {
         glUniform3fv(loc, 1, glm::value_ptr(vec3(view * lightPos)));
@@ -82,11 +87,12 @@ void SceneBasic_Uniform::render()
     mat3 normalMatrix = mat3(vec3(view[0]), vec3(view[1]), vec3(view[2]));
     loc = glGetUniformLocation(prog.getHandle(), "Spot.Direction");
     if (loc >= 0) {
-        glUniform3fv(loc, 1, glm::value_ptr(normalMatrix * vec3(-lightPos)));
+        vec3 lightDir = glm::normalize(vec3(-lightPos) + vec3(0.0f, -0.3f, 0.0f));
+        glUniform3fv(loc, 1, glm::value_ptr(normalMatrix * lightDir));
     }
 
     // Set material properties to white
-    prog.setUniform("Material.Ka", vec3(1.0f, 1.0f, 1.0f));
+    prog.setUniform("Material.Ka", vec3(0.5f, 0.5f, 0.5f));
     prog.setUniform("Material.Kd", vec3(0.5f, 0.5f, 0.5f));
     prog.setUniform("Material.Ks", vec3(0.5f, 0.5f, 0.5f));
     prog.setUniform("Material.Shininess", 100.0f);
@@ -95,6 +101,7 @@ void SceneBasic_Uniform::render()
     setMatrices();
     mesh->render(); // Render the mesh
 }
+
 
 void SceneBasic_Uniform::resize(int w, int h)
 {

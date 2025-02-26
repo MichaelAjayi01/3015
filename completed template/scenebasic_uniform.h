@@ -13,7 +13,6 @@
 class SceneBasic_Uniform : public Scene
 {
 private:
-    // Existing member variables...
     std::unique_ptr<ObjMesh> mesh;
     GLSLProgram prog;
     float angle;

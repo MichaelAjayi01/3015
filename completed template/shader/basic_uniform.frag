@@ -5,7 +5,7 @@ in vec3 Normal;
 in float FragY; 
 in vec2 TexCoord;
 
-layout(binding = 0) uniform sampler2D Text1;
+layout(binding = 0) uniform sampler2D MainText;
 layout(location = 0) out vec4 FragColor;
 
 struct SpotLightInfo {
@@ -26,27 +26,28 @@ struct MaterialInfo {
 
 uniform SpotLightInfo Spot;
 uniform MaterialInfo Material;
-uniform vec3 fogColor; // Uniform for fog color
+uniform vec3 fogColor;
 
-vec3 BlinnphongSpot(vec3 position, vec3 n){
+vec3 BlinnphongSpot(vec3 position, vec3 n) {
     vec3 diffuse = vec3(0), specular = vec3(0);
-    vec3 textColor = texture(Text1, TexCoord).rgb;
-    vec3 ambient = Spot.La * Material.Ka * textColor;
 
+    vec3 mainColor = texture(MainText, TexCoord).rgb;
+
+    vec3 ambient = Spot.La * Material.Ka * mainColor;
     vec3 s = normalize(Spot.Position - position);
 
     float cosAngle = dot(-s, Spot.Direction);
     float angle = acos(cosAngle);
     
-    if(angle >= 0.0 && angle < Spot.Cutoff){
+    if (angle >= 0.0 && angle < Spot.Cutoff) {
         float spotScale = pow(cosAngle, Spot.Exponent);
         float sDotN = max(dot(s, n), 0.0);
-        diffuse = textColor * sDotN;
+        diffuse = mainColor * sDotN;
 
-        if (sDotN > 0.0){
+        if (sDotN > 0.0) {
             vec3 v = normalize(-position);
             vec3 h = normalize(v + s);
-            specular = Material.Ks * pow(max(dot(h, n), 0.0), Material.Shininess) * textColor;
+            specular = Material.Ks * pow(max(dot(h, n), 0.0), Material.Shininess);
         }
 
         return ambient + spotScale * (diffuse + specular) * Spot.L;
@@ -55,14 +56,13 @@ vec3 BlinnphongSpot(vec3 position, vec3 n){
     return ambient;
 }
 
-void main()
-{
+void main() {
     vec3 color = BlinnphongSpot(Position, normalize(Normal));
     
     // Apply fog based on the y-coordinate
     float fogFactor;
-    float fogStartY = -20.0; // Adjust this value to control where the fog starts
-    float fogEndY = -10.0; // Adjust this value to control where the fog ends
+    float fogStartY = -20.0;
+    float fogEndY = -10.0;
 
     if (FragY > fogEndY) {
         fogFactor = 1.0;
