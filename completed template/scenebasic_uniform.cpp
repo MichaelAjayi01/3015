@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
+#include <cmath> // Include cmath for sin function
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -52,12 +53,14 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("MainText", 0);
 }
 
-
-
+// Add a new member variable to keep track of the phase of the sine wave
+float lightPhase = 0.0f;
+const float lightSpeed = 0.0001f; // Control the speed of the light animation
 
 void SceneBasic_Uniform::update(float t)
 {
-    // Update logic here
+    // Update the phase of the sine wave
+    lightPhase += lightSpeed;
 }
 
 void SceneBasic_Uniform::compile() {
@@ -77,7 +80,9 @@ void SceneBasic_Uniform::render()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    vec4 lightPos = vec4(0.0f, 0.0f, 5.0f, 1.0f);
+    // Calculate the new spotlight position using a sine wave
+    float lightY = 10.0f * std::sin(lightPhase);
+    vec4 lightPos = vec4(0.0f, lightY, 5.0f, 1.0f);
 
     GLint loc = glGetUniformLocation(prog.getHandle(), "Spot.Position");
     if (loc >= 0) {
@@ -99,9 +104,8 @@ void SceneBasic_Uniform::render()
 
     model = mat4(1.0f);
     setMatrices();
-    mesh->render(); // Render the mesh
+    mesh->render();
 }
-
 
 void SceneBasic_Uniform::resize(int w, int h)
 {
