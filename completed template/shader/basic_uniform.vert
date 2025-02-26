@@ -1,48 +1,33 @@
 #version 460
 
-layout (location = 0) in vec3 VertexPosition;
-layout (location = 1) in vec3 VertexNormal;
-layout (location = 2) in vec2 VertexTexCoord;
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec3 vertexNormal;
+layout(location = 2) in vec2 vertexTexCoord;
 
-out vec3 FragPos;
+out vec3 Position;
 out vec3 Normal;
-out vec3 LightDir;
-out vec2 TexCoord; // Pass texture coordinates to the fragment shader
-
-struct LightInfo {
-    vec4 position;
-    vec3 La; // Ambient light
-    vec3 Ld; // Diffuse light
-    vec3 Ls; // Specular light
-    vec3 direction; // Spotlight direction
-    float cutoff; // Spotlight cutoff angle (in degrees)
-};
-
-struct MaterialInfo {
-    vec3 Ka; // Ambient reflectivity
-    vec3 Kd; // Diffuse reflectivity
-    vec3 Ks; // Specular reflectivity
-    float Shininess; // Specular shininess factor
-};
-
-uniform LightInfo Light;
-uniform MaterialInfo Material;
+out vec2 TexCoord;
+out float FogFactor;
+out float FragY;
 
 uniform mat4 ModelViewMatrix;
+uniform mat4 ProjectionMatrix;
 uniform mat3 NormalMatrix;
 uniform mat4 MVP;
+uniform float FogDensity; // Uniform for fog density
 
 void main()
 {
-    vec3 n = normalize(NormalMatrix * VertexNormal);
-    vec4 viewPos = ModelViewMatrix * vec4(VertexPosition, 1.0);
-    vec3 s = normalize(vec3(Light.position) - viewPos.xyz);
+    TexCoord = vertexTexCoord;
 
-    FragPos = viewPos.xyz;
-    Normal = n;
-    LightDir = s;
-    TexCoord = vec2(VertexTexCoord.x, 1.0 - VertexTexCoord.y); // Flip texture coordinates vertically
+    Normal = normalize(NormalMatrix * vertexNormal);
+    Position = (ModelViewMatrix * vec4(vertexPosition, 1.0)).xyz;
+    gl_Position = MVP * vec4(vertexPosition, 1.0);
 
-    gl_Position = MVP * vec4(VertexPosition, 1.0);
+    // Pass the y-coordinate to the fragment shader
+    FragY = Position.y;
+
+    // Calculate fog factor
+    float distance = length(Position);
+    FogFactor = exp(-FogDensity * distance);
 }
-

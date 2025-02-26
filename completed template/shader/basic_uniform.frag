@@ -1,88 +1,78 @@
-   #version 460
+#version 460
 
-   in vec3 FragPos;
-   in vec3 Normal;
-   in vec3 LightDir;
-   in vec2 TexCoord; // Receive texture coordinates from the vertex shader
+in vec3 Position;
+in vec3 Normal;
+in float FragY; 
+in vec2 TexCoord;
 
-   out vec4 FragColor;
+layout(binding = 0) uniform sampler2D Text1;
+layout(location = 0) out vec4 FragColor;
 
-   struct LightInfo {
-       vec4 position;
-       vec3 La; // Ambient light
-       vec3 Ld; // Diffuse light
-       vec3 Ls; // Specular light
-       vec3 direction; // Spotlight direction
-       float cutoff; // Spotlight cutoff angle (in degrees)
-   };
+struct SpotLightInfo {
+    vec3 Position;
+    vec3 La;
+    vec3 L;
+    vec3 Direction;
+    float Exponent;
+    float Cutoff;
+};
 
-   struct MaterialInfo {
-       vec3 Ka; // Ambient reflectivity
-       vec3 Kd; // Diffuse reflectivity
-       vec3 Ks; // Specular reflectivity
-       float Shininess; // Specular shininess factor
-   };
+struct MaterialInfo {
+    vec3 Kd; 
+    vec3 Ka; 
+    vec3 Ks; 
+    float Shininess;
+};
 
-   uniform LightInfo Light;
-   uniform MaterialInfo Material;
-   uniform sampler2D Texture; // Base color texture
-   uniform sampler2D MetallicTexture; // Metallic texture
-   uniform sampler2D NormalTexture; // Normal map texture
-   uniform sampler2D HeightTexture; // Height texture
-   uniform sampler2D RoughnessTexture; // Roughness texture
+uniform SpotLightInfo Spot;
+uniform MaterialInfo Material;
+uniform vec3 fogColor; // Uniform for fog color
 
-   // Fog parameters
-   uniform vec3 fogColor;
-   uniform float fogDensity;
+vec3 BlinnphongSpot(vec3 position, vec3 n){
+    vec3 diffuse = vec3(0), specular = vec3(0);
+    vec3 textColor = texture(Text1, TexCoord).rgb;
+    vec3 ambient = Spot.La * Material.Ka * textColor;
 
-   void main()
-   {
-       // Calculate ambient, diffuse, and specular components
-       vec3 ambient = Light.La * Material.Ka;
+    vec3 s = normalize(Spot.Position - position);
 
-       // Sample the normal map
-       vec3 normalMap = texture(NormalTexture, TexCoord).rgb;
-       vec3 perturbedNormal = normalize(normalMap * 2.0 - 1.0); // Convert from [0, 1] to [-1, 1]
+    float cosAngle = dot(-s, Spot.Direction);
+    float angle = acos(cosAngle);
+    
+    if(angle >= 0.0 && angle < Spot.Cutoff){
+        float spotScale = pow(cosAngle, Spot.Exponent);
+        float sDotN = max(dot(s, n), 0.0);
+        diffuse = textColor * sDotN;
 
-       vec3 n = normalize(perturbedNormal);
-       vec3 s = normalize(LightDir);
-       float sDotN = max(dot(s, n), 0.0);
-       vec3 diffuseLight = Light.Ld * Material.Kd * sDotN;
+        if (sDotN > 0.0){
+            vec3 v = normalize(-position);
+            vec3 h = normalize(v + s);
+            specular = Material.Ks * pow(max(dot(h, n), 0.0), Material.Shininess) * textColor;
+        }
 
-       vec3 v = normalize(-FragPos);
-       vec3 r = reflect(-s, n);
-       float rDotV = max(dot(r, v), 0.0);
-       vec3 specularLight = Light.Ls * Material.Ks * pow(rDotV, Material.Shininess);
+        return ambient + spotScale * (diffuse + specular) * Spot.L;
+    }
 
-       vec3 color = ambient + diffuseLight + specularLight;
+    return ambient;
+}
 
-       // Apply base color texture
-       vec3 baseColor = texture(Texture, TexCoord).rgb;
-       float metallic = texture(MetallicTexture, TexCoord).r;
-       float roughness = texture(RoughnessTexture, TexCoord).r;
+void main()
+{
+    vec3 color = BlinnphongSpot(Position, normalize(Normal));
+    
+    // Apply fog based on the y-coordinate
+    float fogFactor;
+    float fogStartY = -20.0; // Adjust this value to control where the fog starts
+    float fogEndY = -10.0; // Adjust this value to control where the fog ends
 
-       // Ensure metallic is not fully 1.0 everywhere
-       metallic = clamp(metallic, 0.0, 0.9); // Reduce maximum metallic effect
+    if (FragY > fogEndY) {
+        fogFactor = 1.0;
+    } else if (FragY > fogStartY) {
+        fogFactor = mix(1.0, 0.0, (fogEndY - FragY) / (fogEndY - fogStartY));
+    } else {
+        fogFactor = 0.0;
+    }
 
-       // Mix metallic properties properly
-       vec3 diffuse = baseColor * (1.0 - metallic); // Keep some diffuse lighting
-       vec3 specular = mix(vec3(0.04), baseColor, metallic); // Avoid complete blackness
-
-       // Apply height texture for bump mapping
-       float height = texture(HeightTexture, TexCoord).r;
-       vec3 perturbedNormalHeight = normalize(n + height * vec3(0.0, 0.0, 1.0)); // Simple bump mapping
-
-       // Blend diffuse and specular components
-       vec3 finalColor = diffuse + specular * (1.0 - roughness);
-
-       // Fog calculations
-       float distance = length(FragPos);
-       float fogFactor = exp(-fogDensity * distance);
-       fogFactor = clamp(fogFactor, 0.0, 1.0);
-
-       finalColor = mix(fogColor, finalColor, fogFactor);
-
-       // Output final color
-       FragColor = vec4(finalColor, 1.0);
-   }
-   
+    // Blend the fog color with the Blinn-Phong color
+    vec3 finalColor = mix(fogColor, color, fogFactor);
+    FragColor = vec4(finalColor, 1.0);
+}
