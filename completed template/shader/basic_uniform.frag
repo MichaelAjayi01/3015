@@ -1,11 +1,14 @@
 #version 460
 
 in vec3 Position;
-in vec3 Normal;
-in float FragY; 
 in vec2 TexCoord;
+in vec3 T;
+in vec3 B;
+in vec3 N;
+in float FragY;
 
 layout(binding = 0) uniform sampler2D MainText;
+layout(binding = 1) uniform sampler2D NormalText;
 layout(location = 0) out vec4 FragColor;
 
 struct SpotLightInfo {
@@ -57,9 +60,21 @@ vec3 BlinnphongSpot(vec3 position, vec3 n) {
 }
 
 void main() {
-    vec3 color = BlinnphongSpot(Position, normalize(Normal));
-    
-    // Apply fog based on the y-coordinate
+    // Retrieve normal from normal map
+    vec3 normalMap = texture(NormalText, TexCoord).rgb;
+    normalMap.g = 1.0 - normalMap.g; // Flip the green channel
+    normalMap = normalize(normalMap * 2.0 - 1.0); // Convert from [0,1] to [-1,1]
+    normalMap = mix(vec3(0.0, 0.0, 1.0), normalMap, 0.5); // Reduce strength
+
+    // Transform normal from tangent space to world space
+    vec3 T_normalized = normalize(T);
+    vec3 B_normalized = normalize(B);
+    vec3 N_normalized = normalize(N);
+    mat3 TBN = mat3(T_normalized, B_normalized, N_normalized);
+    vec3 mappedNormal = normalize(TBN * normalMap);
+
+    vec3 color = BlinnphongSpot(Position, mappedNormal);
+
     float fogFactor;
     float fogStartY = -20.0;
     float fogEndY = -10.0;
@@ -72,7 +87,6 @@ void main() {
         fogFactor = 0.0;
     }
 
-    // Blend the fog color with the Blinn-Phong color
     vec3 finalColor = mix(fogColor, color, fogFactor);
     FragColor = vec4(finalColor, 1.0);
 }

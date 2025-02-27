@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <stdexcept>
-#include <cmath> // Include cmath for sin function
+#include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -46,6 +46,11 @@ void SceneBasic_Uniform::initScene()
     prog.setUniform("fogColor", vec3(0.5f, 0.5f, 0.5f));
     prog.setUniform("FogDensity", 0.001f);
 
+	normalTextureID = Texture::loadTexture("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_Normal.jpg");
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normalTextureID);
+	prog.setUniform("NormalText", 1);
+    
     // Load Base Color Texture
     GLuint texID = Texture::loadTexture("media/Textures/Tachi_Sword_MESH2_Tachi_Sword_SG_BaseColor.jpg");
     glActiveTexture(GL_TEXTURE0);
@@ -81,10 +86,10 @@ void SceneBasic_Uniform::render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Calculate the new spotlight position using a sine wave
-    float lightY = 10.0f * std::sin(lightPhase);
+    float lightY = 10.0f * std::sin(lightPhase); // Declare and calculate lightY
     vec4 lightPos = vec4(0.0f, lightY, 5.0f, 1.0f);
 
-    GLint loc = glGetUniformLocation(prog.getHandle(), "Spot.Position");
+    GLint loc = glGetUniformLocation(prog.getHandle(), "Spot.Position"); // Declare loc
     if (loc >= 0) {
         glUniform3fv(loc, 1, glm::value_ptr(vec3(view * lightPos)));
     }
@@ -106,6 +111,7 @@ void SceneBasic_Uniform::render()
     setMatrices();
     mesh->render();
 }
+
 
 void SceneBasic_Uniform::resize(int w, int h)
 {
