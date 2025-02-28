@@ -9,19 +9,27 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "helper/torus.h"
 #include "helper/objmesh.h"
-#include "helper/cube.h"
 #include "helper/skybox.h"
+#include "helper/cube.h"
 
 class SceneBasic_Uniform : public Scene
 {
+
 private:
-	SkyBox sky;
+    float lightPhase = 0.0f;
+    float lightSpeed;
+
+    SkyBox skybox;
+    GLSLProgram skyBoxProg;
+    GLuint skyboxTex;
+
+
     std::unique_ptr<ObjMesh> mesh;
     GLSLProgram prog;
-	GLSLProgram skyProg;
+    GLuint cubeTex;
     float angle;
-    GLuint textureID;
-	GLuint normalTextureID;
+    GLuint MainTextureID;
+    GLuint normalTextureID;
     void setMatrices();
     void compile();
 
