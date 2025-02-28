@@ -25,14 +25,13 @@ SceneBasic_Uniform::SceneBasic_Uniform() {
     mesh = ObjMesh::load("media/Tachi_Sword_MESH.obj", true);
     lightPhase = 0.0f;
     lightSpeed = 0.0001f;
+    model = mat4(1.0f);
 }
 
 void SceneBasic_Uniform::initScene()
 {
     compile();
     glEnable(GL_DEPTH_TEST);
-
-    model = mat4(1.0f);
 
     view = glm::lookAt(vec3(0.0f, 0.0f, 32.9f), vec3(0.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
     projection = mat4(1.0f);
@@ -59,7 +58,28 @@ void SceneBasic_Uniform::initScene()
 void SceneBasic_Uniform::update(float t)
 {
     lightPhase += lightSpeed;
+    handleInput();
 }
+
+void SceneBasic_Uniform::handleInput()
+{
+    const float rotationSpeed = 0.1f; // Rotation speed in degrees
+
+    if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_W) == GLFW_PRESS) {
+        model = glm::rotate(mat4(1.0f), glm::radians(-rotationSpeed), vec3(1.0f, 0.0f, 0.0f)) * model;
+    }
+    if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_S) == GLFW_PRESS) {
+        model = glm::rotate(mat4(1.0f), glm::radians(rotationSpeed), vec3(1.0f, 0.0f, 0.0f)) * model;
+    }
+    if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_A) == GLFW_PRESS) {
+        model = glm::rotate(mat4(1.0f), glm::radians(-rotationSpeed), vec3(0.0f, 1.0f, 0.0f)) * model;
+    }
+    if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_D) == GLFW_PRESS) {
+        model = glm::rotate(mat4(1.0f), glm::radians(rotationSpeed), vec3(0.0f, 1.0f, 0.0f)) * model;
+    }
+}
+
+
 
 void SceneBasic_Uniform::compile() {
     try {
@@ -105,7 +125,6 @@ void SceneBasic_Uniform::render()
     prog.setUniform("Material.Ks", vec3(0.5f, 0.5f, 0.5f));
     prog.setUniform("Material.Shininess", 100.0f);
 
-    model = mat4(1.0f);
     setMatrices();
     mesh->render();
 }
