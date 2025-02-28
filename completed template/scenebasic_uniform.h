@@ -19,9 +19,15 @@ private:
     glm::mat4 projection;
     int width, height;
 
+    // Mouse control variables
+    double prevMouseX, prevMouseY;
+    float rotationX, rotationY;
+    bool isMousePressed;
+
     void compile();
     void setMatrices();
     void handleInput();
+    void handleMouseInput();
 
 public:
     SceneBasic_Uniform();

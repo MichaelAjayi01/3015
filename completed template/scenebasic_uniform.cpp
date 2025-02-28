@@ -26,6 +26,9 @@ SceneBasic_Uniform::SceneBasic_Uniform() {
     lightPhase = 0.0f;
     lightSpeed = 0.0001f;
     model = mat4(1.0f);
+    rotationX = 0.0f;
+    rotationY = 0.0f;
+    isMousePressed = false;
 }
 
 void SceneBasic_Uniform::initScene()
@@ -59,11 +62,13 @@ void SceneBasic_Uniform::update(float t)
 {
     lightPhase += lightSpeed;
     handleInput();
+    handleMouseInput();
 }
 
 void SceneBasic_Uniform::handleInput()
 {
-    const float rotationSpeed = 0.1f; // Rotation speed in degrees
+    // Keyboard input for rotation
+    const float rotationSpeed = 0.01f; 
 
     if (glfwGetKey(glfwGetCurrentContext(), GLFW_KEY_W) == GLFW_PRESS) {
         model = glm::rotate(mat4(1.0f), glm::radians(-rotationSpeed), vec3(1.0f, 0.0f, 0.0f)) * model;
@@ -79,7 +84,37 @@ void SceneBasic_Uniform::handleInput()
     }
 }
 
+void SceneBasic_Uniform::handleMouseInput()
+{
+    double mouseX, mouseY;
+    glfwGetCursorPos(glfwGetCurrentContext(), &mouseX, &mouseY);
 
+    if (glfwGetMouseButton(glfwGetCurrentContext(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        if (!isMousePressed) {
+            isMousePressed = true;
+            prevMouseX = mouseX;
+            prevMouseY = mouseY;
+        }
+        else {
+            float deltaX = static_cast<float>(mouseX - prevMouseX);
+            float deltaY = static_cast<float>(mouseY - prevMouseY);
+
+            const float mouseSensitivity = 0.0001f; 
+            rotationY += deltaX * mouseSensitivity;
+            rotationX += deltaY * mouseSensitivity;
+
+            model = glm::rotate(mat4(1.0f), glm::radians(rotationX), vec3(1.0f, 0.0f, 0.0f)) *
+                glm::rotate(mat4(1.0f), glm::radians(rotationY), vec3(0.0f, 1.0f, 0.0f)) *
+                model;
+
+            prevMouseX = mouseX;
+            prevMouseY = mouseY;
+        }
+    }
+    else {
+        isMousePressed = false;
+    }
+}
 
 void SceneBasic_Uniform::compile() {
     try {
